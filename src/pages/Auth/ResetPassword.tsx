@@ -4,9 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import FrameLogin from "../../assets/Frame_Forgot.png";
 import RoleFrame from "../../assets/Frame 10000038471.png";
 import LunarSMS from "../../assets/Logo_Auth.png";
-import authService from "../../services/authService";
 
-export default function ResetPassword(): ReactElement {
+export default function ResetPassword(): ReactElement | null {
   const navigate = useNavigate();
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -113,7 +112,7 @@ export default function ResetPassword(): ReactElement {
                 {otp.map((digit, i) => (
                   <input
                     key={i}
-                    ref={(el) => (inputRefs.current[i] = el)}
+                    ref={(el) => { inputRefs.current[i] = el; }}
                     type="text"
                     maxLength={1}
                     inputMode="numeric"

@@ -4,7 +4,6 @@ import {
   Calendar,
   FileText,
   BookOpen,
-  ClipboardList,
   MessageSquare,
   Video,
   FileCheck,

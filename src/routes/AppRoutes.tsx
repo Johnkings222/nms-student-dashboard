@@ -9,7 +9,6 @@ import Login from "../pages/Auth/Login";
 import ForgotPassword from "../pages/Auth/ForgotPassword";
 import ResetPassword from "../pages/Auth/ResetPassword";
 import Verify from "../pages/Auth/Verify";
-import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function AppRoutes() {
   return (

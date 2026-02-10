@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Menu, Bell, User, Settings, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Menu, Bell, Settings, LogOut } from "lucide-react";
 import Logo from "../../assets/Logo.png";
 
 interface NavbarProps {
