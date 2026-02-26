@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Download } from "lucide-react";
 import EmptyStateImg from "../../assets/undraw_open_note_cgre 1.png";
 import RulesService, { type RulesAndRegulations as RulesData } from "../../services/rulesService";
+import LoadingState from "../../components/ui/LoadingState";
 
 export default function RulesAndRegulations(): ReactElement {
   const [loading, setLoading] = useState(true);
@@ -76,11 +77,7 @@ export default function RulesAndRegulations(): ReactElement {
       </div>
 
       {/* Loading state */}
-      {loading && (
-        <div className="flex items-center justify-center py-24">
-          <p className="text-gray-500">Loading...</p>
-        </div>
-      )}
+      {loading && <LoadingState />}
 
       {/* Error state */}
       {error && !loading && (

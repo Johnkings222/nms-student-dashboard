@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Calendar, MessageCircle } from "lucide-react";
 import EmptyStateImg from "../../assets/undraw_open_note_cgre 1.png";
+import LoadingState from "../../components/ui/LoadingState";
 
 interface Assignment {
   id: string;
@@ -139,11 +140,7 @@ export default function AssignmentPage() {
       </div>
 
       {/* Loading state */}
-      {loading && (
-        <div className="flex items-center justify-center py-24">
-          <p className="text-gray-500">Loading...</p>
-        </div>
-      )}
+      {loading && <LoadingState />}
 
       {/* Empty state */}
       {!loading && !hasAssignments && (
