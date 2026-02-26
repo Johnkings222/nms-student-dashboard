@@ -9,6 +9,8 @@ import Login from "../pages/Auth/Login";
 import ForgotPassword from "../pages/Auth/ForgotPassword";
 import ResetPassword from "../pages/Auth/ResetPassword";
 import Verify from "../pages/Auth/Verify";
+import Messaging from "../pages/Messaging/Messaging";
+import LiveClass from "../pages/LiveClass/LiveClass";
 
 export default function AppRoutes() {
   return (
@@ -28,8 +30,8 @@ export default function AppRoutes() {
           <Route path="/rules" element={<RulesAndRegulations />} />
           <Route path="/assignment" element={<AssignmentPage />} />
           <Route path="/timetable" element={<TimeTable />} />
-          <Route path="/message" element={<div className="p-6"><h1 className="text-2xl font-bold">Message - Coming Soon</h1></div>} />
-          <Route path="/live-class" element={<div className="p-6"><h1 className="text-2xl font-bold">Live Class - Coming Soon</h1></div>} />
+          <Route path="/message" element={<Messaging />} />
+          <Route path="/live-class" element={<LiveClass />} />
           <Route path="/exam" element={<div className="p-6"><h1 className="text-2xl font-bold">Exam - Coming Soon</h1></div>} />
           <Route path="/class-test" element={<div className="p-6"><h1 className="text-2xl font-bold">Class Test - Coming Soon</h1></div>} />
           <Route path="/report" element={<div className="p-6"><h1 className="text-2xl font-bold">Report - Coming Soon</h1></div>} />
