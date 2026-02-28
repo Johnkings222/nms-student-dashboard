@@ -1,14 +1,49 @@
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import apiClient from "../../services/api";
+
+interface DashboardStats {
+  attendance: {
+    presentThisMonth: number;
+    absentThisMonth: number;
+    totalSessionPresent: number;
+  };
+  academics: {
+    testsTakenThisSession: number;
+  };
+  session: {
+    id: number;
+    name: string;
+  };
+}
 
 export default function DashboardPage() {
-  const [currentDate, setCurrentDate] = useState(new Date()); // Today's date
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+
+  const mockStats: DashboardStats = {
+    attendance: { presentThisMonth: 18, absentThisMonth: 2, totalSessionPresent: 56 },
+    academics: { testsTakenThisSession: 4 },
+    session: { id: 1, name: "2024/2025" },
+  };
+
+  useEffect(() => {
+    apiClient.get("/api/student/")
+      .then((res) => {
+        if (res.data.success) setStats(res.data.data);
+      })
+      .catch(() => {
+        setStats(mockStats);
+      });
+  }, []);
+
+  const sessionLabel = stats?.session?.name ?? "—";
 
   const statsCards = [
-    { title: "ABSENCE", value: "10", subtitle: "This month", color: "#fb8791" },
-    { title: "PRESENT", value: "56", subtitle: "This month", color: "#6a8bf6" },
-    { title: "SESSION PRESENT TOTAL", value: "0", subtitle: "2023/2024", color: "#9FA1D8" },
-    { title: "TEST TAKEN THIS SESSION", value: "0", subtitle: "2023/2024", color: "#9FA1D8" },
+    { title: "ABSENCE", value: stats?.attendance.absentThisMonth ?? "—", subtitle: "This month", color: "#fb8791" },
+    { title: "PRESENT", value: stats?.attendance.presentThisMonth ?? "—", subtitle: "This month", color: "#6a8bf6" },
+    { title: "SESSION PRESENT TOTAL", value: stats?.attendance.totalSessionPresent ?? "—", subtitle: sessionLabel, color: "#9FA1D8" },
+    { title: "TEST TAKEN THIS SESSION", value: stats?.academics.testsTakenThisSession ?? "—", subtitle: sessionLabel, color: "#9FA1D8" },
   ];
 
   const todayClasses = [

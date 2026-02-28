@@ -37,16 +37,17 @@ apiClient.interceptors.response.use(
   (error) => {
     // Handle 401 Unauthorized - token expired or invalid
     // BUT: Don't auto-redirect for auth endpoints (login, register, etc.)
-    const isAuthEndpoint = error.config?.url?.includes('/login') ||
-                          error.config?.url?.includes('/register') ||
-                          error.config?.url?.includes('/forgot-password') ||
-                          error.config?.url?.includes('/reset-password');
+    // const isAuthEndpoint = error.config?.url?.includes('/login') ||
+    //                       error.config?.url?.includes('/register') ||
+    //                       error.config?.url?.includes('/forgot-password') ||
+    //                       error.config?.url?.includes('/reset-password');
 
-    if (error.response?.status === 401 && !isAuthEndpoint) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
+    // TODO: Re-enable redirect once login credentials are available
+    // if (error.response?.status === 401 && !isAuthEndpoint) {
+    //   localStorage.removeItem('authToken');
+    //   localStorage.removeItem('user');
+    //   window.location.href = '/login';
+    // }
 
     // Handle network errors
     if (!error.response) {

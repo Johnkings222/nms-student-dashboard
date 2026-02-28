@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Calendar, MessageCircle } from "lucide-react";
 import EmptyStateImg from "../../assets/undraw_open_note_cgre 1.png";
 import LoadingState from "../../components/ui/LoadingState";
+import apiClient from "../../services/api";
 
 interface Assignment {
   id: string;
@@ -16,40 +17,62 @@ interface Assignment {
   hasNewComments?: boolean;
 }
 
+const mockAssignments: Assignment[] = [
+  {
+    id: "1",
+    teacher: { name: "Robert Donnelly", avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png" },
+    subject: "English Language",
+    class: "J.S.S.1",
+    date: "21 September, 2024",
+    content: "Lorem ipsum dolor sit amet consectetur. Velit sed porttitor nunc eleifend leo. Tellus nunc blandit scelerisque risus morbi iaculis molestie. Ipsum urna viverra adipiscing egestas commodo nec vitae. Elementum ac nunc in ac.",
+    hasNewComments: true
+  },
+  {
+    id: "2",
+    teacher: { name: "Robert Donnelly", avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png" },
+    subject: "English Language",
+    class: "J.S.S.1",
+    date: "21 September, 2024",
+    content: "Lorem ipsum dolor sit amet consectetur. Velit sed porttitor nunc eleifend leo. Tellus nunc blandit scelerisque risus morbi iaculis molestie. Ipsum urna viverra adipiscing egestas commodo nec vitae. Elementum ac nunc in ac.",
+    hasNewComments: false
+  }
+];
+
 export default function AssignmentPage() {
   const [assignmentDate, setAssignmentDate] = useState("20/09/2024");
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
-  // Mock data - Replace with API call
-  const assignments: Assignment[] = [
-    {
-      id: "1",
-      teacher: {
-        name: "Robert Donnelly",
-        avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png"
-      },
-      subject: "English Language",
-      class: "J.S.S.1",
-      date: "21 September, 2024",
-      content: "Lorem ipsum dolor sit amet consectetur. Velit sed porttitor nunc eleifend leo. Tellus nunc blandit scelerisque risus morbi iaculis molestie. Ipsum urna viverra adipiscing egestas commodo nec vitae. Elementum ac nunc in ac.",
-      hasNewComments: true
-    },
-    {
-      id: "2",
-      teacher: {
-        name: "Robert Donnelly",
-        avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png"
-      },
-      subject: "English Language",
-      class: "J.S.S.1",
-      date: "21 September, 2024",
-      content: "Lorem ipsum dolor sit amet consectetur. Velit sed porttitor nunc eleifend leo. Tellus nunc blandit scelerisque risus morbi iaculis molestie. Ipsum urna viverra adipiscing egestas commodo nec vitae. Elementum ac nunc in ac.",
-      hasNewComments: false
-    }
-  ];
+  useEffect(() => {
+    apiClient.get("/api/student/assignment/student/")
+      .then((res) => {
+        if (res.data.success && res.data.data.length > 0) {
+          const mapped: Assignment[] = res.data.data.map((a: any) => ({
+            id: String(a.id),
+            teacher: {
+              name: a.teacher?.name ?? "Unknown Teacher",
+              avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+            },
+            subject: a.subject?.name ?? "Unknown Subject",
+            class: `Class ${a.classId}`,
+            date: new Date(a.submissionDate).toLocaleDateString("en-US", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }),
+            content: a.description,
+            hasNewComments: false,
+          }));
+          setAssignments(mapped);
+        } else {
+          setAssignments(mockAssignments);
+        }
+      })
+      .catch(() => setAssignments(mockAssignments))
+      .finally(() => setLoading(false));
+  }, []);
 
-  // Set to empty array to test empty state
   const hasAssignments = assignments.length > 0;
 
   const handleSearch = () => {

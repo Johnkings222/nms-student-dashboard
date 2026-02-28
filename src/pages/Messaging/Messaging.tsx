@@ -240,9 +240,9 @@ export default function Messaging(): ReactElement {
           </div>
 
           {filteredMessages.length === 0 ? (
-            <div className="py-16 flex flex-col items-center text-gray-600">
-              <img src={EmptyStateImg} className="w-48 h-auto mb-4" alt="No message" />
-              <p>No message yet</p>
+            <div className="flex flex-col items-center justify-center py-24 text-gray-500">
+              <img src={EmptyStateImg} alt="No messages" className="w-72 h-auto mb-4" loading="lazy" />
+              <p>No messages yet</p>
             </div>
           ) : (
             <div className="space-y-6">
