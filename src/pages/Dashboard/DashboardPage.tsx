@@ -2,6 +2,8 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-reac
 import { useState, useEffect } from "react";
 import apiClient from "../../services/api";
 
+const CLASS_COLORS = ["#B8C54A", "#6B9EFF", "#FF9999", "#FFA94D", "#FB8791", "#5DCCCC", "#B4CF34", "#FBAE44"];
+
 interface DashboardStats {
   attendance: {
     presentThisMonth: number;
@@ -17,24 +19,43 @@ interface DashboardStats {
   };
 }
 
+interface TodayClass {
+  subject: string;
+  time: string;
+  color: string;
+}
+
 export default function DashboardPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [stats, setStats] = useState<DashboardStats | null>(null);
-
-  const mockStats: DashboardStats = {
-    attendance: { presentThisMonth: 18, absentThisMonth: 2, totalSessionPresent: 56 },
-    academics: { testsTakenThisSession: 4 },
-    session: { id: 1, name: "2024/2025" },
-  };
+  const [todayClasses, setTodayClasses] = useState<TodayClass[]>([]);
 
   useEffect(() => {
     apiClient.get("/api/student/")
       .then((res) => {
         if (res.data.success) setStats(res.data.data);
       })
-      .catch(() => {
-        setStats(mockStats);
-      });
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
+    apiClient.get("/api/student/timetable/classes", { data: { term: "Term 1" } })
+      .then((res) => {
+        if (res.data.success) {
+          const timetable: any[] = res.data.data?.timetable || [];
+          const todays = timetable
+            .filter((e) => e.day === todayName)
+            .sort((a, b) => a.period - b.period)
+            .map((e, i) => ({
+              subject: e.subject?.name ?? "—",
+              time: `${e.startTime}–${e.endTime}`,
+              color: CLASS_COLORS[i % CLASS_COLORS.length],
+            }));
+          setTodayClasses(todays);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const sessionLabel = stats?.session?.name ?? "—";
@@ -44,15 +65,6 @@ export default function DashboardPage() {
     { title: "PRESENT", value: stats?.attendance.presentThisMonth ?? "—", subtitle: "This month", color: "#6a8bf6" },
     { title: "SESSION PRESENT TOTAL", value: stats?.attendance.totalSessionPresent ?? "—", subtitle: sessionLabel, color: "#9FA1D8" },
     { title: "TEST TAKEN THIS SESSION", value: stats?.academics.testsTakenThisSession ?? "—", subtitle: sessionLabel, color: "#9FA1D8" },
-  ];
-
-  const todayClasses = [
-    { subject: "Mathematics", time: "08:00-09:00", color: "#B8C54A" },
-    { subject: "Biology", time: "10:00-11:00", color: "#6B9EFF" },
-    { subject: "English Language", time: "12:30-01:30", color: "#FF9999" },
-    { subject: "Chemistry", time: "01:30-02:30", color: "#FFA94D" },
-    { subject: "History", time: "02:30-03:00", color: "#FB8791" },
-    { subject: "Economics", time: "04:00-06:00", color: "#5DCCCC" },
   ];
 
   const getDaysInMonth = (date: Date) => {
@@ -110,25 +122,29 @@ export default function DashboardPage() {
         {/* Today Classes */}
         <div className="flex-1 bg-white rounded-xl shadow-lg p-4 md:p-6">
           <h2 className="text-lg font-bold mb-6 text-gray-800">Today Classes</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 2xl:grid-cols-4 gap-4 justify-items-center">
-            {todayClasses.map((classItem, index) => (
-              <div
-                key={index}
-                className="text-white flex flex-col justify-center items-center text-center w-full"
-                style={{
-                  backgroundColor: classItem.color,
-                  maxWidth: "152px",
-                  minWidth: "120px",
-                  height: "125px",
-                  padding: "16px",
-                  borderRadius: "0"
-                }}
-              >
-                <p className="font-bold text-sm md:text-lg mb-2 line-clamp-2">{classItem.subject}</p>
-                <p className="text-xs md:text-sm font-normal">{classItem.time}</p>
-              </div>
-            ))}
-          </div>
+          {todayClasses.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-8">No classes scheduled for today.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 2xl:grid-cols-4 gap-4 justify-items-center">
+              {todayClasses.map((classItem, index) => (
+                <div
+                  key={index}
+                  className="text-white flex flex-col justify-center items-center text-center w-full"
+                  style={{
+                    backgroundColor: classItem.color,
+                    maxWidth: "152px",
+                    minWidth: "120px",
+                    height: "125px",
+                    padding: "16px",
+                    borderRadius: "0"
+                  }}
+                >
+                  <p className="font-bold text-sm md:text-lg mb-2 line-clamp-2">{classItem.subject}</p>
+                  <p className="text-xs md:text-sm font-normal">{classItem.time}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Calendar */}

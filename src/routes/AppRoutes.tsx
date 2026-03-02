@@ -14,6 +14,7 @@ import LiveClass from "../pages/LiveClass/LiveClass";
 import Exams from "../pages/Exams/Exams";
 import ClassTest from "../pages/ClassTest/ClassTest";
 import ReportCard from "../pages/ReportCard/ReportCard";
+import AttendancePage from "../pages/Attendance/AttendancePage";
 
 export default function AppRoutes() {
   return (
@@ -38,6 +39,7 @@ export default function AppRoutes() {
           <Route path="/exam" element={<Exams />} />
           <Route path="/class-test" element={<ClassTest />} />
           <Route path="/report" element={<ReportCard />} />
+          <Route path="/attendance" element={<AttendancePage />} />
           <Route path="/profile" element={<UpdateProfile />} />
           <Route path="/settings" element={<UpdateProfile />} />
         </Route>

@@ -9,6 +9,7 @@ import {
   FileCheck,
   ClipboardCheck,
   BarChart3,
+  UserCheck,
   X,
 } from "lucide-react";
 
@@ -25,6 +26,7 @@ const menuItems = [
   { path: "/live-class", label: "Live Class", icon: Video },
   { path: "/exam", label: "Exam", icon: BookOpen },
   { path: "/class-test", label: "Class Test", icon: ClipboardCheck },
+  { path: "/attendance", label: "Attendance", icon: UserCheck },
   { path: "/report", label: "Report", icon: BarChart3 },
 ];
 

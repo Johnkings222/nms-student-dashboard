@@ -4,6 +4,18 @@ import EmptyImg from "../../assets/Frame 1000003677.png";
 import XlsIcon from "../../assets/xls.png";
 import CsvIcon from "../../assets/csv.png";
 import PdfIcon from "../../assets/pdf (3).png";
+import LoadingState from "../../components/ui/LoadingState";
+import apiClient from "../../services/api";
+
+interface TestRow {
+  subjectName: string;
+  session: string;
+  className: string;
+  term: string;
+  test1: number;
+  test2: number;
+  totalMarkObtained: number;
+}
 
 function Dropdown({
   options,
@@ -58,6 +70,52 @@ export default function ClassTest(): ReactElement {
   const [selectedClass, setSelectedClass] = useState("Class");
   const [selectedTerm, setSelectedTerm] = useState("Term 1");
   const [selectedSession, setSelectedSession] = useState("2023/2024");
+  const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState<TestRow[]>([]);
+  const [error, setError] = useState("");
+
+  const fetchTests = (term: string) => {
+    setLoading(true);
+    setError("");
+    apiClient.get("/api/student/class", { params: { term } })
+      .then((res) => {
+        const d = res.data.data;
+        if (res.data.success && d?.subjects?.length > 0) {
+          const session = d.session?.name ?? d.session ?? selectedSession;
+          setSelectedSession(String(session));
+          const mapped: TestRow[] = d.subjects.flatMap((subj: any) => {
+            const tests = subj.tests ?? subj.classTests ?? [];
+            return tests.map((t: any) => ({
+              subjectName: subj.subjectName ?? subj.name ?? "—",
+              session: String(session),
+              className: d.className ?? subj.className ?? "—",
+              term: t.term ?? term,
+              test1: t.test1 ?? 0,
+              test2: t.test2 ?? 0,
+              totalMarkObtained: t.totalMarkObtained ?? t.total ?? 0,
+            }));
+          });
+          setRows(mapped);
+        } else {
+          setRows([]);
+        }
+      })
+      .catch((err) => {
+        setError(`${err.response?.status} — ${err.response?.data?.message || err.message}`);
+        setRows([]);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchTests(selectedTerm);
+  }, []);
+
+  const handleSearch = () => fetchTests(selectedTerm);
+
+  const filtered = rows.filter(r =>
+    search.trim() === "" || r.subjectName.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -85,7 +143,7 @@ export default function ClassTest(): ReactElement {
             />
           </div>
 
-          <button className="h-12 px-6 bg-[#13A541] text-white rounded-lg text-sm font-semibold hover:opacity-90">
+          <button onClick={handleSearch} className="h-12 px-6 bg-[#13A541] text-white rounded-lg text-sm font-semibold hover:opacity-90">
             Search
           </button>
 
@@ -99,10 +157,10 @@ export default function ClassTest(): ReactElement {
             <Dropdown
               options={["Term 1", "Term 2", "Term 3"]}
               selected={selectedTerm}
-              onChange={setSelectedTerm}
+              onChange={(val) => { setSelectedTerm(val); fetchTests(val); }}
             />
             <Dropdown
-              options={["2023/2024", "2024/2025", "2025/2026"]}
+              options={[selectedSession]}
               selected={selectedSession}
               onChange={setSelectedSession}
             />
@@ -122,24 +180,51 @@ export default function ClassTest(): ReactElement {
           </div>
         </div>
 
+        {/* Error */}
+        {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
+
+        {/* Loading */}
+        {loading && <LoadingState />}
+
         {/* Table */}
-        <div className="rounded-xl overflow-hidden border border-gray-200 flex flex-col" style={{ minHeight: "calc(100vh - 380px)" }}>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-[#13A541] text-white" style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: "14px", lineHeight: "151%", letterSpacing: "0%" }}>
-                <th className="py-3 px-6 text-left">Subject</th>
-                <th className="py-3 px-6 text-left">Session</th>
-                <th className="py-3 px-6 text-left">Class</th>
-                <th className="py-3 px-6 text-left">Term</th>
-                <th className="py-3 px-6 text-right">Obtained Mark</th>
-              </tr>
-            </thead>
-          </table>
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 py-10">
-            <img src={EmptyImg} alt="No result" className="w-64 h-auto" />
-            <p className="text-gray-500 text-sm">No result yet</p>
+        {!loading && (
+          <div className="rounded-xl overflow-hidden border border-gray-200 flex flex-col" style={{ minHeight: "calc(100vh - 380px)" }}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-[#13A541] text-white" style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: "14px", lineHeight: "151%", letterSpacing: "0%" }}>
+                  <th className="py-3 px-6 text-left">Subject</th>
+                  <th className="py-3 px-6 text-left">Session</th>
+                  <th className="py-3 px-6 text-left">Class</th>
+                  <th className="py-3 px-6 text-left">Term</th>
+                  <th className="py-3 px-6 text-left">Test 1</th>
+                  <th className="py-3 px-6 text-left">Test 2</th>
+                  <th className="py-3 px-6 text-right">Total Mark</th>
+                </tr>
+              </thead>
+              {filtered.length > 0 && (
+                <tbody>
+                  {filtered.map((row, i) => (
+                    <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
+                      <td className="py-3 px-6 capitalize">{row.subjectName}</td>
+                      <td className="py-3 px-6">{row.session}</td>
+                      <td className="py-3 px-6">{row.className}</td>
+                      <td className="py-3 px-6">{row.term}</td>
+                      <td className="py-3 px-6">{row.test1}</td>
+                      <td className="py-3 px-6">{row.test2}</td>
+                      <td className="py-3 px-6 text-right font-semibold text-[#13A541]">{row.totalMarkObtained}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              )}
+            </table>
+            {filtered.length === 0 && (
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 py-10">
+                <img src={EmptyImg} alt="No result" className="w-64 h-auto" />
+                <p className="text-gray-500 text-sm">No result yet</p>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
