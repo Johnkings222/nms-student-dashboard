@@ -6,6 +6,9 @@ import CsvIcon from "../../assets/csv.png";
 import PdfIcon from "../../assets/pdf (3).png";
 import LoadingState from "../../components/ui/LoadingState";
 import apiClient from "../../services/api";
+import authService from "../../services/authService";
+import { downloadTableAsPdf } from "../../utils/downloadPdf";
+import { useSession } from "../../contexts/SessionContext";
 
 interface TestRow {
   subjectName: string;
@@ -66,10 +69,13 @@ function Dropdown({
 }
 
 export default function ClassTest(): ReactElement {
+  const { term: globalTerm, session: globalSession, allSessions } = useSession();
+  const currentUser = authService.getCurrentUser();
+  const studentClass = currentUser?.class?.name || currentUser?.className || "";
   const [search, setSearch] = useState("");
-  const [selectedClass, setSelectedClass] = useState("Class");
-  const [selectedTerm, setSelectedTerm] = useState("Term 1");
-  const [selectedSession, setSelectedSession] = useState("2023/2024");
+  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedTerm, setSelectedTerm] = useState("");
+  const [selectedSession, setSelectedSession] = useState("");
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<TestRow[]>([]);
   const [error, setError] = useState("");
@@ -108,8 +114,15 @@ export default function ClassTest(): ReactElement {
   };
 
   useEffect(() => {
+    if (globalTerm && !selectedTerm) setSelectedTerm(globalTerm);
+    if (globalSession && !selectedSession) setSelectedSession(globalSession);
+    if (studentClass && !selectedClass) setSelectedClass(studentClass);
+  }, [globalTerm, globalSession, studentClass]);
+
+  useEffect(() => {
+    if (!selectedTerm) return;
     fetchTests(selectedTerm);
-  }, []);
+  }, [selectedTerm]);
 
   const handleSearch = () => fetchTests(selectedTerm);
 
@@ -150,17 +163,17 @@ export default function ClassTest(): ReactElement {
           {/* Dropdowns pushed to the right */}
           <div className="flex items-center gap-3 ml-auto">
             <Dropdown
-              options={["Class", "J.S.S.1", "J.S.S.2", "J.S.S.3"]}
-              selected={selectedClass}
+              options={studentClass ? [studentClass] : ["Class"]}
+              selected={selectedClass || "Class"}
               onChange={setSelectedClass}
             />
             <Dropdown
               options={["Term 1", "Term 2", "Term 3"]}
               selected={selectedTerm}
-              onChange={(val) => { setSelectedTerm(val); fetchTests(val); }}
+              onChange={setSelectedTerm}
             />
             <Dropdown
-              options={[selectedSession]}
+              options={allSessions.length > 0 ? allSessions.map(s => s.name) : (selectedSession ? [selectedSession] : [])}
               selected={selectedSession}
               onChange={setSelectedSession}
             />
@@ -174,7 +187,18 @@ export default function ClassTest(): ReactElement {
             <button title="Download CSV">
               <img src={CsvIcon} alt="CSV" className="w-8 h-8 object-contain" />
             </button>
-            <button title="Download PDF">
+            <button
+              title="Download PDF"
+              onClick={() => {
+                const studentName = currentUser?.name || `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`.trim() || "Student";
+                downloadTableAsPdf(
+                  "Class Test Results",
+                  ["Subject", "Session", "Class", "Term", "Test 1", "Test 2", "Total Mark"],
+                  filtered.map((r) => [r.subjectName, r.session, r.className, r.term, String(r.test1), String(r.test2), String(r.totalMarkObtained)]),
+                  { student: studentName, class: selectedClass, term: selectedTerm, session: selectedSession }
+                );
+              }}
+            >
               <img src={PdfIcon} alt="PDF" className="w-8 h-8 object-contain" />
             </button>
           </div>

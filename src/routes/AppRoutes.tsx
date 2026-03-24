@@ -15,6 +15,7 @@ import Exams from "../pages/Exams/Exams";
 import ClassTest from "../pages/ClassTest/ClassTest";
 import ReportCard from "../pages/ReportCard/ReportCard";
 import AttendancePage from "../pages/Attendance/AttendancePage";
+import { SessionProvider } from "../contexts/SessionContext";
 
 export default function AppRoutes() {
   return (
@@ -27,7 +28,7 @@ export default function AppRoutes() {
         <Route path="/verify" element={<Verify />} />
 
         {/* Dashboard routes */}
-        <Route path="/" element={<DashboardLayout />}>
+        <Route path="/" element={<SessionProvider><DashboardLayout /></SessionProvider>}>
           <Route index element={<DashboardPage />} />
 
           {/* Rules and Regulations */}

@@ -1,6 +1,7 @@
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import apiClient from "../../services/api";
+import { useSession } from "../../contexts/SessionContext";
 
 const CLASS_COLORS = ["#B8C54A", "#6B9EFF", "#FF9999", "#FFA94D", "#FB8791", "#5DCCCC", "#B4CF34", "#FBAE44"];
 
@@ -26,6 +27,7 @@ interface TodayClass {
 }
 
 export default function DashboardPage() {
+  const { term: globalTerm } = useSession();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [todayClasses, setTodayClasses] = useState<TodayClass[]>([]);
@@ -39,8 +41,9 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    if (!globalTerm) return;
     const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
-    apiClient.get("/api/student/timetable/classes", { data: { term: "Term 1" } })
+    apiClient.get("/api/student/timetable/classes", { data: { term: globalTerm } })
       .then((res) => {
         if (res.data.success) {
           const timetable: any[] = res.data.data?.timetable || [];
@@ -56,7 +59,7 @@ export default function DashboardPage() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [globalTerm]);
 
   const sessionLabel = stats?.session?.name ?? "—";
 

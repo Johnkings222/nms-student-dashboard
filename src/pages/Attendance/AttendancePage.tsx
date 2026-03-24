@@ -1,48 +1,38 @@
 import { useState, useEffect } from "react";
 import LoadingState from "../../components/ui/LoadingState";
 import apiClient from "../../services/api";
-import authService from "../../services/authService";
 
-interface AttendanceRecord {
-  id: number;
-  date: string;
-  week: number;
-  status: "present" | "absent" | "late";
-  class: { id: number; name: string };
+interface AttendanceStats {
+  presentThisMonth: number;
+  absentThisMonth: number;
+  totalSessionPresent: number;
 }
 
 export default function AttendancePage() {
-  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [stats, setStats] = useState<AttendanceStats | null>(null);
+  const [sessionName, setSessionName] = useState("—");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const user = authService.getCurrentUser();
-    if (!user?.id) {
-      setError("Unable to load attendance. Please log in again.");
-      setLoading(false);
-      return;
-    }
-    apiClient.get(`/api/teacher/student/${user.id}`)
+    apiClient.get("/api/student/")
       .then((res) => {
-        if (res.data.success) setRecords(res.data.data.records || []);
-        else setError("Failed to load attendance records.");
+        if (res.data.success) {
+          setStats(res.data.data.attendance);
+          setSessionName(res.data.data.session?.name ?? "—");
+        } else {
+          setError("Failed to load attendance data.");
+        }
       })
-      .catch(() => setError("Failed to load attendance records."))
+      .catch(() => setError("Failed to load attendance data."))
       .finally(() => setLoading(false));
   }, []);
 
-  const total = records.length;
-  const present = records.filter((r) => r.status === "present").length;
-  const absent = records.filter((r) => r.status === "absent").length;
-  const late = records.filter((r) => r.status === "late").length;
+  const present = stats?.presentThisMonth ?? 0;
+  const absent = stats?.absentThisMonth ?? 0;
+  const total = present + absent;
+  const sessionTotal = stats?.totalSessionPresent ?? 0;
   const attendanceRate = total > 0 ? Math.round((present / total) * 100) : 0;
-
-  const statusStyle = (status: string) => {
-    if (status === "present") return "bg-green-100 text-green-700";
-    if (status === "absent") return "bg-red-100 text-red-700";
-    return "bg-yellow-100 text-yellow-700";
-  };
 
   return (
     <div className="space-y-6">
@@ -54,65 +44,78 @@ export default function AttendancePage() {
       {loading && <LoadingState />}
 
       {!loading && error && (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-500 text-center">{error}</p>
       )}
 
       {!loading && !error && (
         <>
-          {/* Summary Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl shadow p-4 text-center">
-              <p className="text-2xl font-bold text-[#13A541]">{attendanceRate}%</p>
-              <p className="text-xs text-gray-500 mt-1">Attendance Rate</p>
+          {/* Attendance Rate - Large Card */}
+          <div className="bg-white rounded-xl shadow p-8 text-center">
+            <div className="relative inline-flex items-center justify-center w-36 h-36">
+              <svg className="w-36 h-36 -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" strokeWidth="10" />
+                <circle
+                  cx="60" cy="60" r="52" fill="none"
+                  stroke="#13A541" strokeWidth="10" strokeLinecap="round"
+                  strokeDasharray={`${attendanceRate * 3.267} 326.7`}
+                />
+              </svg>
+              <span className="absolute text-3xl font-bold text-[#13A541]">{attendanceRate}%</span>
             </div>
-            <div className="bg-white rounded-xl shadow p-4 text-center">
-              <p className="text-2xl font-bold text-green-600">{present}</p>
-              <p className="text-xs text-gray-500 mt-1">Present</p>
+            <p className="text-sm text-gray-500 mt-3">Attendance Rate This Month</p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl shadow p-5 text-center">
+              <p className="text-3xl font-bold text-green-600">{present}</p>
+              <p className="text-xs text-gray-500 mt-2">Present This Month</p>
             </div>
-            <div className="bg-white rounded-xl shadow p-4 text-center">
-              <p className="text-2xl font-bold text-red-500">{absent}</p>
-              <p className="text-xs text-gray-500 mt-1">Absent</p>
+            <div className="bg-white rounded-xl shadow p-5 text-center">
+              <p className="text-3xl font-bold text-red-500">{absent}</p>
+              <p className="text-xs text-gray-500 mt-2">Absent This Month</p>
             </div>
-            <div className="bg-white rounded-xl shadow p-4 text-center">
-              <p className="text-2xl font-bold text-yellow-500">{late}</p>
-              <p className="text-xs text-gray-500 mt-1">Late</p>
+            <div className="bg-white rounded-xl shadow p-5 text-center">
+              <p className="text-3xl font-bold text-gray-700">{total}</p>
+              <p className="text-xs text-gray-500 mt-2">Total Days This Month</p>
+            </div>
+            <div className="bg-white rounded-xl shadow p-5 text-center">
+              <p className="text-3xl font-bold text-[#13A541]">{sessionTotal}</p>
+              <p className="text-xs text-gray-500 mt-2">Session Total ({sessionName})</p>
             </div>
           </div>
 
-          {/* Records Table */}
-          <div className="bg-white rounded-xl shadow overflow-hidden">
-            {records.length === 0 ? (
-              <div className="py-16 text-center text-gray-500 text-sm">
-                No attendance records found.
+          {/* Visual breakdown */}
+          <div className="bg-white rounded-xl shadow p-6">
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">This Month Breakdown</h2>
+            <div className="space-y-3">
+              {/* Present bar */}
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-gray-600">Present</span>
+                  <span className="font-medium text-green-600">{present} days</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-3">
+                  <div
+                    className="bg-green-500 h-3 rounded-full transition-all"
+                    style={{ width: total > 0 ? `${(present / total) * 100}%` : "0%" }}
+                  />
+                </div>
               </div>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-[#13A541] text-white" style={{ fontWeight: 700, fontSize: "14px" }}>
-                    <th className="py-3 px-6 text-left">Date</th>
-                    <th className="py-3 px-6 text-left">Class</th>
-                    <th className="py-3 px-6 text-left">Week</th>
-                    <th className="py-3 px-6 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {records.map((r) => (
-                    <tr key={r.id} className="border-b last:border-0 hover:bg-gray-50">
-                      <td className="py-3 px-6">
-                        {new Date(r.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-                      </td>
-                      <td className="py-3 px-6">{r.class?.name ?? "—"}</td>
-                      <td className="py-3 px-6">Week {r.week}</td>
-                      <td className="py-3 px-6 text-center">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${statusStyle(r.status)}`}>
-                          {r.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+              {/* Absent bar */}
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-gray-600">Absent</span>
+                  <span className="font-medium text-red-500">{absent} days</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-3">
+                  <div
+                    className="bg-red-400 h-3 rounded-full transition-all"
+                    style={{ width: total > 0 ? `${(absent / total) * 100}%` : "0%" }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </>
       )}

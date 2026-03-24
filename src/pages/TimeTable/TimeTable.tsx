@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { CalendarDays } from "lucide-react";
 import apiClient from "../../services/api";
 import LoadingState from "../../components/ui/LoadingState";
+import { useSession } from "../../contexts/SessionContext";
 
 interface TimetableEntry {
   id: number;
@@ -26,8 +27,8 @@ const COLOR_CLASSES = [
 ];
 
 export default function TimeTable(): ReactElement {
-  const [selectedTerm, setSelectedTerm] = useState("Term 1");
-  const [session, setSession] = useState("—");
+  const { term: globalTerm, session: globalSession } = useSession();
+  const [selectedTerm, setSelectedTerm] = useState("");
   const [timetableMap, setTimetableMap] = useState<Record<string, Record<number, TimetableEntry>>>({});
   const [loading, setLoading] = useState(true);
 
@@ -36,8 +37,7 @@ export default function TimeTable(): ReactElement {
     apiClient.get("/api/student/timetable/classes", { data: { term } })
       .then((res) => {
         if (res.data.success) {
-          const { timetable, session: sess } = res.data.data;
-          if (sess) setSession(sess);
+          const { timetable } = res.data.data;
 
           // Build lookup map: { day: { period: entry } }
           const map: Record<string, Record<number, TimetableEntry>> = {};
@@ -53,8 +53,13 @@ export default function TimeTable(): ReactElement {
   };
 
   useEffect(() => {
+    if (globalTerm && !selectedTerm) setSelectedTerm(globalTerm);
+  }, [globalTerm]);
+
+  useEffect(() => {
+    if (!selectedTerm) return;
     fetchTimetable(selectedTerm);
-  }, []);
+  }, [selectedTerm]);
 
   const handleTermChange = (term: string) => {
     setSelectedTerm(term);
@@ -70,13 +75,12 @@ export default function TimeTable(): ReactElement {
 
       <div className="bg-white rounded-t-xl shadow">
         {/* Header */}
-        <div className="grid grid-cols-[160px_repeat(6,167px)] items-center text-sm text-gray-700 px-4 py-3 border-b">
-          <div className="col-span-2 flex items-center gap-2">
+        <div className="flex items-center justify-between text-sm text-gray-700 px-4 py-3 border-b">
+          <div className="flex items-center gap-2">
             <CalendarDays size={16} className="text-accent" />
             <span>Time Table</span>
           </div>
-          <div className="col-span-3" />
-          <div className="text-right">{session}</div>
+          <div>{globalSession || "—"}</div>
         </div>
 
         {/* Term selector row */}

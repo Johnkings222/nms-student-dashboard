@@ -6,6 +6,9 @@ import CsvIcon from "../../assets/csv.png";
 import PdfIcon from "../../assets/pdf (3).png";
 import LoadingState from "../../components/ui/LoadingState";
 import apiClient from "../../services/api";
+import authService from "../../services/authService";
+import { downloadTableAsPdf } from "../../utils/downloadPdf";
+import { useSession } from "../../contexts/SessionContext";
 
 interface ExamRow {
   subjectName: string;
@@ -64,9 +67,13 @@ function Dropdown({
 }
 
 export default function Exams(): ReactElement {
+  const { term: globalTerm, session: globalSession, allSessions } = useSession();
+  const currentUser = authService.getCurrentUser();
+  const studentClass = currentUser?.class?.name || currentUser?.className || "";
   const [search, setSearch] = useState("");
-  const [selectedTerm, setSelectedTerm] = useState("Term 1");
-  const [selectedSession, setSelectedSession] = useState("Session");
+  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedTerm, setSelectedTerm] = useState("");
+  const [selectedSession, setSelectedSession] = useState("");
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<ExamRow[]>([]);
 
@@ -101,8 +108,15 @@ export default function Exams(): ReactElement {
   };
 
   useEffect(() => {
+    if (globalTerm && !selectedTerm) setSelectedTerm(globalTerm);
+    if (globalSession && !selectedSession) setSelectedSession(globalSession);
+    if (studentClass && !selectedClass) setSelectedClass(studentClass);
+  }, [globalTerm, globalSession, studentClass]);
+
+  useEffect(() => {
+    if (!selectedTerm) return;
     fetchExams(selectedTerm);
-  }, []);
+  }, [selectedTerm]);
 
   const handleSearch = () => fetchExams(selectedTerm);
 
@@ -143,13 +157,18 @@ export default function Exams(): ReactElement {
           {/* Dropdowns pushed to the right */}
           <div className="flex items-center gap-3 ml-auto">
             <Dropdown
-              options={["Term 1", "Term 2", "Term 3"]}
-              selected={selectedTerm}
-              onChange={(val) => { setSelectedTerm(val); fetchExams(val); }}
+              options={studentClass ? [studentClass] : ["Class"]}
+              selected={selectedClass || "Class"}
+              onChange={setSelectedClass}
             />
             <Dropdown
-              options={[selectedSession]}
-              selected={selectedSession}
+              options={["Term 1", "Term 2", "Term 3"]}
+              selected={selectedTerm}
+              onChange={setSelectedTerm}
+            />
+            <Dropdown
+              options={allSessions.length > 0 ? allSessions.map(s => s.name) : (selectedSession ? [selectedSession] : ["Session"])}
+              selected={selectedSession || "Session"}
               onChange={setSelectedSession}
             />
           </div>
@@ -162,7 +181,18 @@ export default function Exams(): ReactElement {
             <button title="Download CSV">
               <img src={CsvIcon} alt="CSV" className="w-8 h-8 object-contain" />
             </button>
-            <button title="Download PDF">
+            <button
+              title="Download PDF"
+              onClick={() => {
+                const studentName = currentUser?.name || `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`.trim() || "Student";
+                downloadTableAsPdf(
+                  "Exam Results",
+                  ["Subject", "Session", "Class", "Term", "Obtained Mark"],
+                  filtered.map((r) => [r.subjectName, r.session, r.className, r.term, String(r.marksObtained)]),
+                  { student: studentName, class: selectedClass, term: selectedTerm, session: selectedSession }
+                );
+              }}
+            >
               <img src={PdfIcon} alt="PDF" className="w-8 h-8 object-contain" />
             </button>
           </div>

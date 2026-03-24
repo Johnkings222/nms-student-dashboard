@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, Bell, Settings, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import authService from "../../services/authService";
 import Logo from "../../assets/Logo.png";
 
 interface NavbarProps {
@@ -8,12 +10,22 @@ interface NavbarProps {
 
 export default function Navbar({ onMenuClick }: NavbarProps) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const studentName = "John Doe"; // TODO: Get from auth context
-  const studentClass = "J.S.S 3A"; // TODO: Get from API
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = authService.getCurrentUser();
+    setCurrentUser(user);
+  }, []);
+
+  const studentName = currentUser?.name || currentUser?.firstName
+    ? `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`.trim()
+    : "Student";
+  const studentClass = currentUser?.class?.name || currentUser?.className || "";
 
   const handleLogout = () => {
-    // TODO: Implement logout
-    console.log("Logging out...");
+    authService.logout();
   };
 
   return (
@@ -43,11 +55,21 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
       {/* Right: Notifications + Profile */}
       <div className="flex items-center gap-3">
         {/* Notifications */}
-        <button className="relative p-2 hover:bg-gray-100 rounded-lg transition">
-          <Bell size={20} className="text-gray-600" />
-          {/* Notification badge */}
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red rounded-full"></span>
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative p-2 hover:bg-gray-100 rounded-lg transition"
+          >
+            <Bell size={20} className="text-gray-600" />
+          </button>
+
+          {showNotifications && (
+            <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 py-3 z-50">
+              <p className="px-4 pb-2 text-sm font-semibold text-gray-700 border-b">Notifications</p>
+              <p className="px-4 py-6 text-sm text-gray-400 text-center">No notifications yet</p>
+            </div>
+          )}
+        </div>
 
         {/* Profile Dropdown */}
         <div className="relative">
@@ -92,7 +114,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
               <button
                 onClick={() => {
                   setShowProfileMenu(false);
-                  window.location.href = "/profile";
+                  navigate("/profile");
                 }}
                 style={{ color: "#000" }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
