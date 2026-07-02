@@ -4,7 +4,7 @@ import axios from 'axios';
 // Using relative URL to leverage Vite proxy and avoid CORS issues in development
 // In production, uses environment variable or falls back to default
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? 'https://nms-src9.onrender.com' : '');
+  (import.meta.env.PROD ? 'https://nms-6z0i.onrender.com' : '');
 
 // Create axios instance with default config
 const apiClient = axios.create({

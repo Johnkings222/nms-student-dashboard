@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://nms-src9.onrender.com',
+        target: 'https://nms-6z0i.onrender.com',
         changeOrigin: true,
         secure: false,
       }
