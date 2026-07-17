@@ -34,7 +34,7 @@ export default function TimeTable(): ReactElement {
 
   const fetchTimetable = (term: string) => {
     setLoading(true);
-    apiClient.get("/api/student/timetable/classes", { data: { term } })
+    apiClient.get("/api/student/timetable/classes", { params: { term } })
       .then((res) => {
         if (res.data.success) {
           const { timetable } = res.data.data;

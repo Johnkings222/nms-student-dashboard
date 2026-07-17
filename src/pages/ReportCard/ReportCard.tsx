@@ -138,8 +138,8 @@ export default function ReportCard(): ReactElement {
     setLoading(true);
     try {
       const [reportRes, psyRes] = await Promise.allSettled([
-        apiClient.get("/api/student/student-report", { data: { term } }),
-        apiClient.get("/api/student/student-psy", { data: { term } }),
+        apiClient.get("/api/student/student-report", { params: { term } }),
+        apiClient.get("/api/student/student-psy", { params: { term } }),
       ]);
 
       if (reportRes.status === "fulfilled" && reportRes.value.data.success) {

@@ -79,7 +79,7 @@ export default function Exams(): ReactElement {
 
   const fetchExams = (term: string) => {
     setLoading(true);
-    apiClient.get("/api/student/exam", { data: { term } })
+    apiClient.get("/api/student/exam", { params: { term } })
       .then((res) => {
         console.log("Exams API response:", res.data);
         if (res.data.success && res.data.data?.subjects?.length > 0) {

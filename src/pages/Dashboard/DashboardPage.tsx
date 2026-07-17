@@ -43,7 +43,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!globalTerm) return;
     const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
-    apiClient.get("/api/student/timetable/classes", { data: { term: globalTerm } })
+    apiClient.get("/api/student/timetable/classes", { params: { term: globalTerm } })
       .then((res) => {
         if (res.data.success) {
           const timetable: any[] = res.data.data?.timetable || [];

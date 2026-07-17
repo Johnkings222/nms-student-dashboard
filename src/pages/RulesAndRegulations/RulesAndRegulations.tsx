@@ -29,19 +29,9 @@ export default function RulesAndRegulations(): ReactElement {
         console.warn("Invalid data structure received:", data);
         setRulesData(null);
       }
-    } catch (err: any) {
-      console.error("Error fetching rules:", err);
-
-      // Handle 403 (Forbidden) and 404 (Not Found) as "no data yet"
-      // This happens when admin hasn't uploaded rules yet
-      if (err.response?.status === 403 || err.response?.status === 404) {
-        setRulesData(null);
-        setError("");
-      } else {
-        // Show error for other types of failures
-        setError(err.message || "Failed to load rules and regulations");
-        setRulesData(null);
-      }
+    } catch {
+      setRulesData(null);
+      setError("");
     } finally {
       setLoading(false);
     }
